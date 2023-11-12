@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -13,7 +14,7 @@ import (
 )
 
 var (
-	port = flag.Int("p", 8080, "Port of the server")
+	port = flag.Int("p", getAnAvailablePort(), "Port of the server")
 	root = flag.String("w", ".", "Root dir of the server")
 )
 
@@ -56,4 +57,29 @@ func openBrowser(url string) {
 	if err != nil {
 		fmt.Println("Failed to open browser:", err)
 	}
+}
+
+func portCheck(port int) bool {
+	l, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	if err != nil {
+		return false
+	}
+	defer func(l net.Listener) {
+		err := l.Close()
+		if err != nil {
+			fmt.Println("Failed to Close Listener :", err)
+		}
+	}(l)
+	return true
+}
+
+func getAnAvailablePort() int {
+	startPort := 8080
+	endPort := 9080
+	for port := startPort; port <= endPort; port++ {
+		if portCheck(port) {
+			return port
+		}
+	}
+	return startPort
 }
